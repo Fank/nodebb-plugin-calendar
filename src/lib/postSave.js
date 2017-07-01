@@ -8,18 +8,25 @@ import { notify } from './reminders';
 import { getSetting } from './settings';
 
 const plugins = require.main.require('./src/plugins');
+const posts = require.main.require('./src/posts');
 const topics = require.main.require('./src/topics');
 const winston = require.main.require('winston');
 
 const p = Promise.promisify;
 
 const fireHook = p(plugins.fireHook);
+const getPostData = p(posts.getPostData);
 const getTopicField = p(topics.getTopicField);
 
 const isMainPost = async ({ pid, tid }) => {
   const mainPid = await getTopicField(tid, 'mainPid');
   return parseInt(mainPid, 10) === parseInt(pid, 10);
 };
+
+const postRestore = async (data) => {
+  console.log(data);
+  return await postSave(data);
+}
 
 const postSave = async (data) => {
   const { post } = data;
@@ -46,6 +53,8 @@ const postSave = async (data) => {
     return data;
   };
 
+  return invalid();
+
   if (!event) {
     return invalid();
   }
@@ -60,7 +69,7 @@ const postSave = async (data) => {
     return invalid();
   }
 
-  const main = post.isMain || data.data.isMain || await isMainPost(post);
+  const main = post.isMain || await isMainPost(post);
   if (!main && await getSetting('mainPostOnly')) {
     return invalid();
   }
@@ -85,6 +94,7 @@ const postSave = async (data) => {
   return data;
 };
 
+const postRestoreCallback = (data, cb) => postRestore(data).asCallback(cb);
 const postSaveCallback = (data, cb) => postSave(data).asCallback(cb);
 
-export { postSave, postSaveCallback };
+export { postRestore, postRestoreCallback, postSave, postSaveCallback };

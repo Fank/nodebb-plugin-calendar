@@ -42,6 +42,9 @@
       "hook": "filter:composer.formatting", "method": "composerFormatting", "priority": 6
     },
     {
+      "hook": "action:post.restore", "method": "postRestore"
+    },
+    {
       "hook": "action:post.delete", "method": "postDelete"
     }
   ],

@@ -5,7 +5,7 @@ import 'source-map-support/register';
 
 import init from './init';
 import { parsePostCallback, parseRawCallback } from './parseFilters';
-import { postSaveCallback } from './postSave';
+import { postRestoreCallback, postSaveCallback } from './postSave';
 import { privilegesList, privilegesGroupsList, privilegesListHuman } from './privileges';
 import { deleteEvent } from './event';
 import './sockets';
@@ -50,6 +50,7 @@ export {
   adminMenu,
   parsePostCallback as parsePost,
   parseRawCallback as parseRaw,
+  postRestoreCallback as postRestore,
   postSaveCallback as postSave,
   postSaveCallback as postEdit,
   privilegesList,
