@@ -30,7 +30,6 @@ exports.default = (_ref, callback) => {
 
   const defaults = {
     checkingInterval: 1000 * 60 * 5,
-    checkingICalInterval: 60 * 24,
     mainPostOnly: false,
     respondIfCanReply: false
   };

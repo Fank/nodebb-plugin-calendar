@@ -31,6 +31,8 @@ var _requestPromise2 = _interopRequireDefault(_requestPromise);
 
 var _responses = require('./responses');
 
+var _icals = require('./icals');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const db = require.main.require('./src/database');
@@ -121,55 +123,54 @@ const getEventsByDate = (() => {
 
 const getExternalEventsByDate = (() => {
   var _ref4 = (0, _bluebird.coroutine)(function* (startDate, endDate) {
-    const keys = yield getSortedSetRange(listExternalKey, 0, -1);
-    const events = yield getObjects(keys.map(function (key) {
-      return 'plugins:calendar:ical:' + key;
-    }));
+    const icals = yield (0, _icals.getICals)();
     const preparedEvents = [];
 
-    yield _bluebird2.default.all(events.filter(function (event) {
-      return event.url;
-    }).map((() => {
-      var _ref5 = (0, _bluebird.coroutine)(function* (event) {
-        const body = yield (0, _requestPromise2.default)(event.url);
-        const jcalData = _ical2.default.parse(body);
-        const vcalendar = new _ical2.default.Component(jcalData);
-        const vevents = yield _bluebird2.default.all(vcalendar.getAllSubcomponents('vevent').filter(function (vevent) {
-          const dtstart = vevent.getFirstPropertyValue('dtstart');
-          const dtend = vevent.getFirstPropertyValue('dtend');
-
-          return dtstart.toUnixTime() + '000' >= startDate && dtend.toUnixTime() + '999' <= endDate;
-        }).map((() => {
-          var _ref6 = (0, _bluebird.coroutine)(function* (vevent) {
+    yield _bluebird2.default.all(icals.map((() => {
+      var _ref5 = (0, _bluebird.coroutine)(function* (ical) {
+        try {
+          const body = yield (0, _icals.getICalBody)(ical);
+          const jcalData = _ical2.default.parse(body.toString());
+          const vcalendar = new _ical2.default.Component(jcalData);
+          const vevents = yield _bluebird2.default.all(vcalendar.getAllSubcomponents('vevent').filter(function (vevent) {
             const dtstart = vevent.getFirstPropertyValue('dtstart');
             const dtend = vevent.getFirstPropertyValue('dtend');
-            const summary = vevent.getFirstPropertyValue('summary') || '';
-            const location = vevent.getFirstPropertyValue('location') || '';
-            const url = vevent.getFirstPropertyValue('url') || '';
-            const description = (vevent.getFirstPropertyValue('description') || '').replace(/^\s+/g, '').replace(/\n/g, '<br>');
 
-            return {
-              external: true,
-              source: event.name,
-              url: url,
+            return dtstart.toUnixTime() + '000' >= startDate && dtend.toUnixTime() + '999' <= endDate;
+          }).map((() => {
+            var _ref6 = (0, _bluebird.coroutine)(function* (vevent) {
+              const dtstart = vevent.getFirstPropertyValue('dtstart');
+              const dtend = vevent.getFirstPropertyValue('dtend');
+              const summary = vevent.getFirstPropertyValue('summary') || '';
+              const location = vevent.getFirstPropertyValue('location') || '';
+              const url = vevent.getFirstPropertyValue('url') || '';
+              const description = (vevent.getFirstPropertyValue('description') || '').replace(/^\s+/g, '').replace(/\n/g, '<br>');
 
-              allday: true,
-              day: dtstart.toString().substring(0, 10),
-              description: description,
-              endDate: Number(dtend.toUnixTime() + '999'),
-              location: location,
-              name: summary,
-              startDate: Number(dtstart.toUnixTime() + '000')
+              return {
+                external: true,
+                source: ical.name,
+                url: url,
+
+                allday: true,
+                day: dtstart.toString().substring(0, 10),
+                description: description,
+                endDate: Number(dtend.toUnixTime() + '999'),
+                location: location,
+                name: summary,
+                startDate: Number(dtstart.toUnixTime() + '000')
+              };
+            });
+
+            return function (_x6) {
+              return _ref6.apply(this, arguments);
             };
-          });
+          })()));
 
-          return function (_x6) {
-            return _ref6.apply(this, arguments);
-          };
-        })()));
-
-        preparedEvents.push.apply(preparedEvents, (0, _toConsumableArray3.default)(vevents));
-        return;
+          preparedEvents.push.apply(preparedEvents, (0, _toConsumableArray3.default)(vevents));
+        } catch (e) {
+          return false;
+        }
+        return true;
       });
 
       return function (_x5) {

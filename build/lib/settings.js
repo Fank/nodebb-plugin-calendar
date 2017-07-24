@@ -20,7 +20,6 @@ const setObject = p(db.setObject);
 
 const convert = {
   checkingInterval: x => parseInt(x, 10) || 1000 * 60 * 5,
-  checkingICalInterval: x => parseInt(x, 10) || 60 * 24,
   respondIfCanReply: x => x === true || x === 'true',
   mainPostOnly: x => x === true || x === 'true'
 };
@@ -30,13 +29,11 @@ const getSettings = (() => {
     var _ref2 = (yield getObject('plugin-calendar:settings')) || {};
 
     const checkingInterval = _ref2.checkingInterval,
-          checkingICalInterval = _ref2.checkingICalInterval,
           respondIfCanReply = _ref2.respondIfCanReply,
           mainPostOnly = _ref2.mainPostOnly;
 
     return {
       checkingInterval: convert.checkingInterval(checkingInterval),
-      checkingICalInterval: convert.checkingICalInterval(checkingICalInterval),
       respondIfCanReply: convert.respondIfCanReply(respondIfCanReply),
       mainPostOnly: convert.mainPostOnly(mainPostOnly)
     };
